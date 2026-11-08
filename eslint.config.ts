@@ -8,9 +8,11 @@ import stylistic from "@stylistic/eslint-plugin";
 import { defineConfig } from "eslint/config";
 
 export default defineConfig([
+  { ignores: ["package-lock.json"] },
   { files: ["**/*.{js,mjs,cjs,ts,mts,cts}"], plugins: { js, stylistic }, extends: ["js/recommended"], languageOptions: { globals: globals.node }, rules: { "stylistic/quotes": ["error", "single"] } },
   tseslint.configs.recommended,
   { files: ["**/*.json"], plugins: { json }, language: "json/json", extends: ["json/recommended"] },
+  { files: ["**/tsconfig.json"], plugins: { json }, language: "json/jsonc", languageOptions: { allowTrailingCommas: true }, extends: ["json/recommended"] },
   { files: ["**/*.jsonc"], plugins: { json }, language: "json/jsonc", extends: ["json/recommended"] },
   { files: ["**/*.md"], plugins: { markdown }, language: "markdown/gfm", extends: ["markdown/recommended"] },
   { files: ["**/*.css"], plugins: { css }, language: "css/css", extends: ["css/recommended"] },
