@@ -1,5 +1,5 @@
-import { PagamentoDao } from '../infra/bd/mysql/pagamento.dao';
-import { ServicoDao } from '../infra/bd/mysql/servico.dao';
+import { PagamentoDao } from '../infra/bd/pg/pagamento.dao';
+import { ServicoDao } from '../infra/bd/pg/servico.dao';
 import { Pagamento } from '../dominio/entidades/pagamento';
 import { HttpError } from '../util/http-error';
 

@@ -1,4 +1,4 @@
-import { AssinaturaDao } from '../infra/bd/mysql/assinatura.dao';
+import { AssinaturaDao } from '../infra/bd/pg/assinatura.dao';
 import { Assinatura } from '../dominio/entidades/assinatura';
 import { HttpError } from '../util/http-error';
 

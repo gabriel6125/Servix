@@ -1,5 +1,5 @@
-import { ClienteDao } from '../infra/bd/mysql/cliente.dao';
-import { ServicoDao } from '../infra/bd/mysql/servico.dao';
+import { ClienteDao } from '../infra/bd/pg/cliente.dao';
+import { ServicoDao } from '../infra/bd/pg/servico.dao';
 import { Servico } from '../dominio/entidades/servico';
 import { HttpError } from '../util/http-error';
 

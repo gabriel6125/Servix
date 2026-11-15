@@ -1,5 +1,5 @@
-import { OrcamentoDao } from '../infra/bd/mysql/orcamento.dao';
-import { ServicoDao } from '../infra/bd/mysql/servico.dao';
+import { OrcamentoDao } from '../infra/bd/pg/orcamento.dao';
+import { ServicoDao } from '../infra/bd/pg/servico.dao';
 import { Orcamento } from '../dominio/entidades/orcamento';
 import { HttpError } from '../util/http-error';
 

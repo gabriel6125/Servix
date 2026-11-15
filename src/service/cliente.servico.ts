@@ -1,4 +1,4 @@
-import { ClienteDao } from '../infra/bd/mysql/cliente.dao';
+import { ClienteDao } from '../infra/bd/pg/cliente.dao';
 import { Cliente } from '../dominio/entidades/cliente';
 import { HttpError } from '../util/http-error';
 

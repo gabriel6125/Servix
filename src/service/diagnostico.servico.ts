@@ -1,5 +1,5 @@
-import { DiagnosticoDao } from '../infra/bd/mysql/diagnostico.dao';
-import { ServicoDao } from '../infra/bd/mysql/servico.dao';
+import { DiagnosticoDao } from '../infra/bd/pg/diagnostico.dao';
+import { ServicoDao } from '../infra/bd/pg/servico.dao';
 import { Diagnostico } from '../dominio/entidades/diagnostico';
 import { HttpError } from '../util/http-error';
 

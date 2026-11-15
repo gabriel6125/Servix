@@ -1,4 +1,4 @@
-import { PlanoDao } from '../infra/bd/mysql/plano.dao';
+import { PlanoDao } from '../infra/bd/pg/plano.dao';
 import { Plano } from '../dominio/entidades/plano';
 import { HttpError } from '../util/http-error';
 

@@ -1,4 +1,4 @@
-import { UsuarioDao } from '../infra/bd/mysql/usuario.dao';
+import { UsuarioDao } from '../infra/bd/pg/usuario.dao';
 import { Usuario } from '../dominio/entidades/usuario';
 import { HttpError } from '../util/http-error';
 import { createToken } from '../util/jwt';

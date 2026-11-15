@@ -1,4 +1,4 @@
-import { DespesaDao } from '../infra/bd/mysql/despesa.dao';
+import { DespesaDao } from '../infra/bd/pg/despesa.dao';
 import { Despesa } from '../dominio/entidades/despesa';
 import { HttpError } from '../util/http-error';
 
