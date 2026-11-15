@@ -1,68 +1,95 @@
 import { plainToInstance } from 'class-transformer';
 import type { Request, Response } from 'express';
 import { validate } from 'class-validator';
-import { OrcamentoDto } from '../../../../aplication/dto/orcamento/orcamento';
-import { Orcamento } from '../../../../dominio/entidades/orcamento';
-import { OrcamentoService } from '../../../../service/orcamento.servico';
-import { idDaRota, usuarioAutenticado } from './controller.util';
+import { OrcamentoCreateDto } from '../../../../aplication/dto/orcamento/orcamentoCreateDto';
+import { OrcamentoSearchByIdDto } from '../../../../aplication/dto/orcamento/orcamentoSearchByIdDto';
+import { OrcamentoSearchDto } from '../../../../aplication/dto/orcamento/orcamentoSearchDto';
+import { OrcamentoUpdateDto } from '../../../../aplication/dto/orcamento/orcamentoUpdateDto';
+import { AtualizarOrcamentoUseCase } from '../../../../aplication/usecase/orcamento/AtualizarOrcamentoUseCase';
+import { BuscarOrcamentoPorIdUseCase } from '../../../../aplication/usecase/orcamento/BuscarOrcamentoPorIdUseCase';
+import { CriarOrcamentoUseCase } from '../../../../aplication/usecase/orcamento/CriarOrcamentoUseCase';
+import { ExcluirOrcamentoUseCase } from '../../../../aplication/usecase/orcamento/ExcluirOrcamentoUseCase';
+import { ListarOrcamentosUseCase } from '../../../../aplication/usecase/orcamento/ListarOrcamentosUseCase';
+import { idDaRota, tratarErroDoController, usuarioAutenticado } from './controller.util';
 
 export class OrcamentoController {
-    private readonly service = new OrcamentoService();
+    private readonly criarUseCase = new CriarOrcamentoUseCase();
+    private readonly listarUseCase = new ListarOrcamentosUseCase();
+    private readonly buscarPorIdUseCase = new BuscarOrcamentoPorIdUseCase();
+    private readonly atualizarUseCase = new AtualizarOrcamentoUseCase();
+    private readonly excluirUseCase = new ExcluirOrcamentoUseCase();
 
     public async salvar(req: Request, res: Response) {
-        const dto = plainToInstance(OrcamentoDto, req.body ?? {});
-        const errors = await validate(dto, { whitelist: true, forbidNonWhitelisted: true });
-        if (errors.length > 0) {
-            return res.status(400).json({ errors: errors.map((error) => error.toString()) });
-        }
+        try {
+            const dto = plainToInstance(OrcamentoCreateDto, req.body ?? {});
+            const errors = await validate(dto, { whitelist: true, forbidNonWhitelisted: true });
+            if (errors.length > 0) {
+                return res.status(400).json({ errors: errors.map((error) => error.toString()) });
+            }
 
-        const orcamento = Orcamento.construir(
-            dto.servico_id.toString(),
-            dto.valor_pecas === undefined ? 0 : dto.valor_pecas,
-            dto.valor_mao_de_obra === undefined ? 0 : dto.valor_mao_de_obra,
-            dto.outros_custos === undefined ? 0 : dto.outros_custos,
-            dto.valor_total,
-            dto.status,
-            dto.link_acesso ?? null,
-        );
-        const salvo = await this.service.salvar(orcamento, usuarioAutenticado(req));
-        return res.status(201).json(salvo);
+            const salvo = await this.criarUseCase.execute({
+                usuarioId: usuarioAutenticado(req),
+                dados: dto,
+            });
+            return res.status(201).json(salvo);
+        } catch (error) {
+            return tratarErroDoController(error, res);
+        }
     }
 
     public async buscarPorId(req: Request, res: Response) {
-        const orcamento = await this.service.buscarPorId(idDaRota(req), usuarioAutenticado(req));
-        return res.json(orcamento);
+        try {
+            const id = await idDaRota(req, OrcamentoSearchByIdDto);
+            const orcamento = await this.buscarPorIdUseCase.execute({
+                id,
+                usuarioId: usuarioAutenticado(req),
+            });
+            return res.json(plainToInstance(OrcamentoSearchByIdDto, orcamento.toJSON()));
+        } catch (error) {
+            return tratarErroDoController(error, res);
+        }
     }
 
     public async listar(req: Request, res: Response) {
-        const orcamentos = await this.service.listar(usuarioAutenticado(req));
-        return res.json(orcamentos);
+        try {
+            const orcamentos = await this.listarUseCase.execute(usuarioAutenticado(req));
+            return res.json(plainToInstance(
+                OrcamentoSearchDto,
+                orcamentos.map((orcamento) => orcamento.toJSON()),
+            ));
+        } catch (error) {
+            return tratarErroDoController(error, res);
+        }
     }
 
     public async deletar(req: Request, res: Response) {
-        await this.service.excluir(idDaRota(req), usuarioAutenticado(req));
-        return res.status(204).send();
+        try {
+            const id = await idDaRota(req, OrcamentoSearchByIdDto);
+            await this.excluirUseCase.execute({ id, usuarioId: usuarioAutenticado(req) });
+            return res.status(204).send();
+        } catch (error) {
+            return tratarErroDoController(error, res);
+        }
     }
 
     public async atualizar(req: Request, res: Response) {
-        const dto = plainToInstance(OrcamentoDto, req.body ?? {});
-        const errors = await validate(dto, { whitelist: true, forbidNonWhitelisted: true });
-        if (errors.length > 0) {
-            return res.status(400).json({ errors: errors.map((error) => error.toString()) });
+        try {
+            const dto = plainToInstance(OrcamentoUpdateDto, req.body ?? {});
+            const errors = await validate(dto, { whitelist: true, forbidNonWhitelisted: true });
+            if (errors.length > 0) {
+                return res.status(400).json({ errors: errors.map((error) => error.toString()) });
+            }
+            const id = await idDaRota(req, OrcamentoSearchByIdDto);
+            const usuarioId = usuarioAutenticado(req);
+            const atualizado = await this.atualizarUseCase.execute({
+                id,
+                usuarioId,
+                dados: dto,
+            });
+            return res.json(atualizado);
+        } catch (error) {
+            return tratarErroDoController(error, res);
         }
-
-        const orcamento = Orcamento.reconstruir({
-            id: idDaRota(req),
-            servicoId: dto.servico_id.toString(),
-            valorPecas: dto.valor_pecas === undefined ? 0 : dto.valor_pecas,
-            valorMaoDeObra: dto.valor_mao_de_obra === undefined ? 0 : dto.valor_mao_de_obra,
-            outrosCustos: dto.outros_custos === undefined ? 0 : dto.outros_custos,
-            valorTotal: dto.valor_total,
-            status: dto.status,
-            linkAcesso: dto.link_acesso ?? null,
-        });
-        const atualizado = await this.service.atualizar(orcamento, usuarioAutenticado(req));
-        return res.json(atualizado);
     }
 }
 

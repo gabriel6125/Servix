@@ -1,12 +1,4 @@
-import { IsDateString, IsNumber } from 'class-validator';
-
-export class PagamentoDto {
-    @IsNumber()
-    servico_id!: number;
-
-    @IsNumber()
-    valor!: number;
-
-    @IsDateString()
-    data_pagamento!: string;
-}
+export { PagamentoCreateDto } from './pagamentoCreateDto';
+export { PagamentoUpdateDto } from './pagamentoUpdateDto';
+export { PagamentoSearchDto } from './pagamentoSearchDto';
+export { PagamentoSearchByIdDto } from './pagamentoSearchByIdDto';

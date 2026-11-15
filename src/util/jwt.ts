@@ -1,11 +1,11 @@
-import { sign, verify } from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 
 export function createToken(userId: string): string {
-    return sign({ sub: userId }, getSecret(), { expiresIn: '1h' });
+    return jwt.sign({ sub: userId }, getSecret(), { expiresIn: '1h' });
 }
 
 export function readTokenSubject(token: string): string | undefined {
-    const payload = verify(token, getSecret());
+    const payload = jwt.verify(token, getSecret());
     if (typeof payload === 'string' || typeof payload.sub !== 'string') {
         return undefined;
     }

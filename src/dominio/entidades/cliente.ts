@@ -1,24 +1,30 @@
-import { randomUUID } from 'node:crypto';
-
 export type propsCliente = {
     id: string | null;
+    usuarioId: string;
     nome: string;
+    telefone: string | null;
     email: string | null;
-    senha: string | null;
 };
 
 export class Cliente {
     private constructor(private props: propsCliente) {}
 
     public static construir(
+        usuarioId: string,
         nome: string,
+        telefone: string | null,
         email: string | null,
-        senha: string | null,
     ): Cliente {
-        if (!nome || !email || !senha) {
-            throw new Error('Nome, e-mail e senha são obrigatórios.');
+        if (!usuarioId || !nome) {
+            throw new Error('Usuário e nome são obrigatórios.');
         }
-        return new Cliente({ id: randomUUID(), nome: nome.trim(), email: email.trim().toLowerCase(), senha});
+        return new Cliente({
+            id: null,
+            usuarioId,
+            nome: nome.trim(),
+            telefone,
+            email: email?.trim().toLowerCase() ?? null,
+        });
     }
 
     public static reconstruir(props: propsCliente): Cliente {
@@ -26,7 +32,18 @@ export class Cliente {
     }
 
     public get id() { return this.props.id; }
+    public get usuarioId() { return this.props.usuarioId; }
     public get nome() { return this.props.nome; }
+    public get telefone() { return this.props.telefone; }
     public get email() { return this.props.email; }
-    public get senha() { return this.props.senha; }
+
+    public toJSON() {
+        return {
+            id: this.id,
+            usuario_id: this.usuarioId,
+            nome: this.nome,
+            telefone: this.telefone,
+            email: this.email,
+        };
+    }
 }

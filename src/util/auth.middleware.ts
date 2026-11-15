@@ -1,5 +1,4 @@
 import type { RequestHandler } from 'express';
-import { JsonWebTokenError, NotBeforeError, TokenExpiredError } from 'jsonwebtoken';
 import { HttpError } from './http-error';
 import { readTokenSubject } from './jwt';
 
@@ -30,9 +29,8 @@ export const authMiddleware: RequestHandler = (request, _response, next) => {
         next();
     } catch (error) {
         if (
-            error instanceof JsonWebTokenError
-            || error instanceof TokenExpiredError
-            || error instanceof NotBeforeError
+            error instanceof Error
+            && ['JsonWebTokenError', 'NotBeforeError', 'TokenExpiredError'].includes(error.name)
         ) {
             next(new HttpError(401, 'Token inválido ou expirado.'));
             return;

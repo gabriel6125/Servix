@@ -1,12 +1,11 @@
-import type { ErrorRequestHandler, RequestHandler } from 'express';
+import type { ErrorRequestHandler, RequestHandler, Response } from 'express';
 import { HttpError } from './http-error';
 
 export const notFoundHandler: RequestHandler = (_request, _response, next) => {
     next(new HttpError(404, 'Rota não encontrada.'));
 };
 
-export const errorHandler: ErrorRequestHandler = (error: unknown, _request, response, next) => {
-    void next;
+export function responderErro(error: unknown, response: Response): void {
     if (error instanceof HttpError) {
         response.status(error.status).json({ error: { message: error.message } });
         return;
@@ -38,6 +37,11 @@ export const errorHandler: ErrorRequestHandler = (error: unknown, _request, resp
 
     console.error('Erro não tratado na API:', error);
     response.status(500).json({ error: { message: 'Erro interno do servidor.' } });
+}
+
+export const errorHandler: ErrorRequestHandler = (error: unknown, _request, response, _next) => {
+    void _next;
+    responderErro(error, response);
 };
 
 function getDatabaseCode(error: unknown): string | undefined {

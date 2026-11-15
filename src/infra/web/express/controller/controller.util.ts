@@ -1,5 +1,13 @@
-import type { Request } from 'express';
+import { plainToInstance } from 'class-transformer';
+import { validate } from 'class-validator';
+import type { Request, Response } from 'express';
+import { responderErro } from '../../../../util/error-handler';
 import { HttpError } from '../../../../util/http-error';
+
+export function tratarErroDoController(error: unknown, response: Response): Response {
+    responderErro(error, response);
+    return response;
+}
 
 export function usuarioAutenticado(request: Request): string {
     if (!request.userId) {
@@ -8,10 +16,14 @@ export function usuarioAutenticado(request: Request): string {
     return request.userId;
 }
 
-export function idDaRota(request: Request): string {
-    const id = request.params.id;
-    if (typeof id !== 'string' || !/^[1-9]\d*$/.test(id)) {
+export async function idDaRota(
+    request: Request,
+    Dto: new () => { id: string },
+): Promise<string> {
+    const dto = plainToInstance(Dto, { id: request.params.id });
+    const errors = await validate(dto);
+    if (errors.length > 0) {
         throw new HttpError(400, 'Identificador inválido.');
     }
-    return id;
+    return dto.id;
 }

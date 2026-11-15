@@ -1,62 +1,89 @@
 import { plainToInstance } from 'class-transformer';
 import type { Request, Response } from 'express';
 import { validate } from 'class-validator';
-import { UsuarioDto, UsuarioLoginDto, UsuarioUpdateDto } from '../../../../aplication/dto/usuario/usuario.dto';
-import { Usuario } from '../../../../dominio/entidades/usuario';
-import { UsuarioService } from '../../../../service/usuario.servico';
-import { usuarioAutenticado } from './controller.util';
+import { UsuarioCreateDto } from '../../../../aplication/dto/usuario/usuarioCreateDto';
+import { UsuarioLoginDto } from '../../../../aplication/dto/usuario/usuarioLoginDto';
+import { UsuarioUpdateDto } from '../../../../aplication/dto/usuario/usuarioUpdateDto';
+import { AtualizarPerfilUsuarioUseCase } from '../../../../aplication/usecase/usuario/AtualizarPerfilUsuarioUseCase';
+import { AutenticarUsuarioUseCase } from '../../../../aplication/usecase/usuario/AutenticarUsuarioUseCase';
+import { BuscarUsuarioPorIdUseCase } from '../../../../aplication/usecase/usuario/BuscarUsuarioPorIdUseCase';
+import { ExcluirUsuarioUseCase } from '../../../../aplication/usecase/usuario/ExcluirUsuarioUseCase';
+import { RegistrarUsuarioUseCase } from '../../../../aplication/usecase/usuario/RegistrarUsuarioUseCase';
+import { tratarErroDoController, usuarioAutenticado } from './controller.util';
 
 export class UsuarioController {
-    private readonly service = new UsuarioService();
+    private readonly registrarUseCase = new RegistrarUsuarioUseCase();
+    private readonly autenticarUseCase = new AutenticarUsuarioUseCase();
+    private readonly buscarPorIdUseCase = new BuscarUsuarioPorIdUseCase();
+    private readonly atualizarPerfilUseCase = new AtualizarPerfilUsuarioUseCase();
+    private readonly excluirUseCase = new ExcluirUsuarioUseCase();
 
     public async registrar(req: Request, res: Response) {
-        const dto = plainToInstance(UsuarioDto, req.body ?? {});
-        const errors = await validate(dto, { whitelist: true, forbidNonWhitelisted: true });
-        if (errors.length > 0) {
-            return res.status(400).json({ errors: errors.map((error) => error.toString()) });
-        }
+        try {
+            const dto = plainToInstance(UsuarioCreateDto, req.body ?? {});
+            const errors = await validate(dto, { whitelist: true, forbidNonWhitelisted: true });
+            if (errors.length > 0) {
+                return res.status(400).json({ errors: errors.map((error) => error.toString()) });
+            }
 
-        const usuario = Usuario.construir(dto.nome, dto.email, dto.senha);
-        const resultado = await this.service.registrar(usuario);
-        return res.status(201).json(resultado);
+            const resultado = await this.registrarUseCase.execute(dto);
+            return res.status(201).json(resultado);
+        } catch (error) {
+            return tratarErroDoController(error, res);
+        }
     }
 
     public async login(req: Request, res: Response) {
-        const dto = plainToInstance(UsuarioLoginDto, req.body ?? {});
-        const errors = await validate(dto, { whitelist: true, forbidNonWhitelisted: true });
-        if (errors.length > 0) {
-            return res.status(400).json({ errors: errors.map((error) => error.toString()) });
+        try {
+            const dto = plainToInstance(UsuarioLoginDto, req.body ?? {});
+            const errors = await validate(dto, { whitelist: true, forbidNonWhitelisted: true });
+            if (errors.length > 0) {
+                return res.status(400).json({ errors: errors.map((error) => error.toString()) });
+            }
+            const resultado = await this.autenticarUseCase.execute(dto);
+            return res.json(resultado);
+        } catch (error) {
+            return tratarErroDoController(error, res);
         }
-        const resultado = await this.service.autenticar(dto.email, dto.senha);
-        return res.json(resultado);
     }
 
     public async buscarMeuPerfil(req: Request, res: Response) {
-        const usuario = await this.service.buscarPorId(usuarioAutenticado(req));
-        return res.json(usuario);
+        try {
+            const usuario = await this.buscarPorIdUseCase.execute(usuarioAutenticado(req));
+            return res.json(usuario);
+        } catch (error) {
+            return tratarErroDoController(error, res);
+        }
     }
 
     public async atualizarMeuPerfil(req: Request, res: Response) {
-        const dto = plainToInstance(UsuarioUpdateDto, req.body ?? {});
-        const errors = await validate(dto, {
-            whitelist: true,
-            forbidNonWhitelisted: true,
-            skipMissingProperties: true,
-        });
-        if (errors.length > 0) {
-            return res.status(400).json({ errors: errors.map((error) => error.toString()) });
+        try {
+            const dto = plainToInstance(UsuarioUpdateDto, req.body ?? {});
+            const errors = await validate(dto, {
+                whitelist: true,
+                forbidNonWhitelisted: true,
+                skipMissingProperties: true,
+            });
+            if (errors.length > 0) {
+                return res.status(400).json({ errors: errors.map((error) => error.toString()) });
+            }
+            const usuario = await this.atualizarPerfilUseCase.execute({
+                id: usuarioAutenticado(req),
+                dados: dto,
+            });
+            return res.json(usuario);
+        } catch (error) {
+            return tratarErroDoController(error, res);
         }
-        if (Object.keys(req.body ?? {}).length === 0) {
-            return res.status(400).json({ error: 'Informe ao menos um campo para atualizar.' });
-        }
-
-        const usuario = await this.service.atualizarPerfil(usuarioAutenticado(req), dto);
-        return res.json(usuario);
     }
 
     public async excluirMeuPerfil(req: Request, res: Response) {
-        await this.service.excluir(usuarioAutenticado(req));
-        return res.status(204).send();
+        try {
+            await this.excluirUseCase.execute(usuarioAutenticado(req));
+            return res.status(204).send();
+        } catch (error) {
+            return tratarErroDoController(error, res);
+        }
     }
 }
 
