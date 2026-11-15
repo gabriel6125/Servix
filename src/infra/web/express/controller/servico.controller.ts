@@ -1,7 +1,8 @@
 import { plainToInstance } from 'class-transformer';
 import type { Request, Response } from 'express';
 import { validate } from 'class-validator';
-import { ServicoDto } from '../../../../aplication/dto/servico/servico.dto';
+import { ServicoCreateDto } from '../../../../aplication/dto/servico/servicoCreateDto';
+import { ServicoUpdateDto } from '../../../../aplication/dto/servico/servicoUpdateDto';
 import { Servico } from '../../../../dominio/entidades/servico';
 import { ServicoService } from '../../../../service/servico.servico';
 import { idDaRota, usuarioAutenticado } from './controller.util';
@@ -10,7 +11,7 @@ export class ServicoController {
     private readonly service = new ServicoService();
 
     public async salvar(req: Request, res: Response) {
-        const dto = plainToInstance(ServicoDto, req.body ?? {});
+        const dto = plainToInstance(ServicoCreateDto, req.body ?? {});
         const errors = await validate(dto, { whitelist: true, forbidNonWhitelisted: true });
         if (errors.length > 0) {
             return res.status(400).json({ errors: errors.map((error) => error.toString()) });
@@ -45,20 +46,31 @@ export class ServicoController {
     }
 
     public async atualizar(req: Request, res: Response) {
-        const dto = plainToInstance(ServicoDto, req.body ?? {});
+        const dto = plainToInstance(ServicoUpdateDto, req.body ?? {});
         const errors = await validate(dto, { whitelist: true, forbidNonWhitelisted: true });
         if (errors.length > 0) {
             return res.status(400).json({ errors: errors.map((error) => error.toString()) });
         }
 
+        if (Object.keys(req.body ?? {}).length === 0) {
+            return res.status(400).json({ error: 'Informe ao menos um campo para atualizar.' });
+        }
+
+        const usuarioId = usuarioAutenticado(req);
+        const id = idDaRota(req);
+        const atual = await this.service.buscarPorId(id, usuarioId);
         const servico = Servico.reconstruir({
-            id: idDaRota(req),
-            usuarioId: usuarioAutenticado(req),
-            clienteId: dto.cliente_id.toString(),
-            descricao: dto.descricao,
-            status: dto.status,
-            dataPrevista: dto.data_prevista ?? null,
-            dataConclusao: dto.data_conclusao ?? null,
+            id,
+            usuarioId,
+            clienteId: dto.cliente_id === undefined ? atual.clienteId : dto.cliente_id.toString(),
+            descricao: dto.descricao ?? atual.descricao,
+            status: dto.status ?? atual.status,
+            dataPrevista: Object.prototype.hasOwnProperty.call(req.body ?? {}, 'data_prevista')
+                ? dto.data_prevista ?? null
+                : atual.dataPrevista,
+            dataConclusao: Object.prototype.hasOwnProperty.call(req.body ?? {}, 'data_conclusao')
+                ? dto.data_conclusao ?? null
+                : atual.dataConclusao,
         });
         const atualizado = await this.service.atualizar(servico);
         return res.json(atualizado);

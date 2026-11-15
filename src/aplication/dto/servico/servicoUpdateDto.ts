@@ -1,0 +1,28 @@
+import { IsDateString, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, MaxLength, Min } from 'class-validator';
+
+export class ServicoUpdateDto {
+    @IsOptional()
+    @IsNumber()
+    @IsInt()
+    @Min(1)
+    cliente_id?: number;
+
+    @IsOptional()
+    @IsString()
+    @IsNotEmpty()
+    descricao?: string;
+
+    @IsOptional()
+    @IsString()
+    @IsNotEmpty()
+    @MaxLength(50)
+    status?: string;
+
+    @IsOptional()
+    @IsDateString()
+    data_prevista?: string | null;
+
+    @IsOptional()
+    @IsDateString()
+    data_conclusao?: string | null;
+}
