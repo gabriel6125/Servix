@@ -1,3 +1,4 @@
+// Define o formato dos dados usados nesta parte da aplicacao.
 export type propsCliente = {
     id: string | null;
     usuarioId: string;
@@ -6,7 +7,9 @@ export type propsCliente = {
     email: string | null;
 };
 
+// Define o comportamento e os dados desta classe.
 export class Cliente {
+    // Metodo constructor: executa esta etapa do fluxo e usa o estado ou os parametros recebidos.
     private constructor(private props: propsCliente) {}
 
     public static construir(
@@ -15,6 +18,7 @@ export class Cliente {
         telefone: string | null,
         email: string | null,
     ): Cliente {
+        // Verifica a condicao antes de prosseguir para o fluxo alternativo.
         if (!usuarioId || !nome) {
             throw new Error('Usuário e nome são obrigatórios.');
         }
@@ -27,6 +31,7 @@ export class Cliente {
         });
     }
 
+    // Metodo reconstruir: executa esta etapa do fluxo e usa o estado ou os parametros recebidos.
     public static reconstruir(props: propsCliente): Cliente {
         return new Cliente(props);
     }
@@ -37,6 +42,7 @@ export class Cliente {
     public get telefone() { return this.props.telefone; }
     public get email() { return this.props.email; }
 
+    // Metodo toJSON: executa esta etapa do fluxo e usa o estado ou os parametros recebidos.
     public toJSON() {
         return {
             id: this.id,

@@ -1,3 +1,5 @@
+// Valida o cabecalho Bearer e o JWT, e associa o identificador autenticado a requisicao antes de liberar rotas protegidas.
+
 import type { RequestHandler } from 'express';
 import { HttpError } from './http-error';
 import { readTokenSubject } from './jwt';
@@ -8,19 +10,23 @@ declare module 'express-serve-static-core' {
     }
 }
 
+// Define um valor compartilhado usado pelas chamadas desta camada.
 export const authMiddleware: RequestHandler = (request, _response, next) => {
     const authorization = request.get('authorization');
     const token = authorization?.startsWith('Bearer ')
         ? authorization.slice('Bearer '.length)
         : '';
 
+    // Verifica a condicao antes de prosseguir para o fluxo alternativo.
     if (!token) {
         next(new HttpError(401, 'Token de autenticação não informado.'));
         return;
     }
 
+    // Tenta executar a operacao; falhas sao capturadas no bloco catch abaixo.
     try {
         const userId = readTokenSubject(token);
+        // Verifica a condicao antes de prosseguir para o fluxo alternativo.
         if (!userId || !/^[1-9]\d*$/.test(userId)) {
             next(new HttpError(401, 'Token de autenticação inválido.'));
             return;

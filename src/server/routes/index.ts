@@ -16,7 +16,9 @@ const router = Router();
 router.get('/', (_request, response) => response.send('Olá, Dev'));
 
 router.get('/health', async (_request, response, next) => {
+    // Tenta executar a operacao; falhas sao capturadas no bloco catch abaixo.
     try {
+        // Executa a consulta usando o pool compartilhado de conexoes.
         await connection.query('SELECT 1');
         return response.status(200).json({ status: 'ok', database: 'ok' });
     } catch (error) {

@@ -1,8 +1,11 @@
 import { connection } from '../../../util/connection';
 import { Cliente, type propsCliente } from '../../../dominio/entidades/cliente';
 
+// Define o comportamento e os dados desta classe.
 export class ClienteDao {
+    // Metodo salvar: executa esta etapa do fluxo e usa o estado ou os parametros recebidos.
     public async salvar(cliente: Cliente): Promise<Cliente> {
+        // Aguarda a operacao assincrona e armazena o resultado para o passo seguinte.
         const result = await connection.query(
             `insert into cliente (usuario_id, nome, telefone, email)
              values ($1, $2, $3, $4)
@@ -12,7 +15,9 @@ export class ClienteDao {
         return this.mapearCliente(result.rows[0]);
     }
 
+    // Metodo buscarPorId: executa esta etapa do fluxo e usa o estado ou os parametros recebidos.
     public async buscarPorId(id: string, usuarioId: string): Promise<Cliente | null> {
+        // Aguarda a operacao assincrona e armazena o resultado para o passo seguinte.
         const result = await connection.query(
             `select id, usuario_id, nome, telefone, email
              from cliente where id = $1 and usuario_id = $2`,
@@ -21,7 +26,9 @@ export class ClienteDao {
         return result.rows[0] ? this.mapearCliente(result.rows[0]) : null;
     }
 
+    // Metodo listar: executa esta etapa do fluxo e usa o estado ou os parametros recebidos.
     public async listar(usuarioId: string): Promise<Cliente[]> {
+        // Aguarda a operacao assincrona e armazena o resultado para o passo seguinte.
         const result = await connection.query(
             `select id, usuario_id, nome, telefone, email
              from cliente where usuario_id = $1 order by id`,
@@ -30,7 +37,9 @@ export class ClienteDao {
         return result.rows.map((row) => this.mapearCliente(row));
     }
 
+    // Metodo atualizar: executa esta etapa do fluxo e usa o estado ou os parametros recebidos.
     public async atualizar(cliente: Cliente): Promise<Cliente | null> {
+        // Aguarda a operacao assincrona e armazena o resultado para o passo seguinte.
         const result = await connection.query(
             `update cliente
              set nome = $1, telefone = $2, email = $3
@@ -41,7 +50,9 @@ export class ClienteDao {
         return result.rows[0] ? this.mapearCliente(result.rows[0]) : null;
     }
 
+    // Metodo excluir: executa esta etapa do fluxo e usa o estado ou os parametros recebidos.
     public async excluir(id: string, usuarioId: string): Promise<boolean> {
+        // Aguarda a operacao assincrona e armazena o resultado para o passo seguinte.
         const result = await connection.query(
             'delete from cliente where id = $1 and usuario_id = $2',
             [id, usuarioId],
@@ -49,6 +60,7 @@ export class ClienteDao {
         return (result.rowCount ?? 0) > 0;
     }
 
+    // Metodo mapearCliente: executa esta etapa do fluxo e usa o estado ou os parametros recebidos.
     private mapearCliente(row: Record<string, unknown>): Cliente {
         const props: propsCliente = {
             id: String(row.id),

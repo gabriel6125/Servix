@@ -1,5 +1,6 @@
 import { IsEmail, IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
 
+// Define o comportamento e os dados desta classe.
 export class ClienteCreateDto {
     @IsString()
     @IsNotEmpty()

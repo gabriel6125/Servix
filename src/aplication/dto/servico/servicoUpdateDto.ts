@@ -1,5 +1,6 @@
 import { IsDateString, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, MaxLength, Min } from 'class-validator';
 
+// Define o comportamento e os dados desta classe.
 export class ServicoUpdateDto {
     @IsOptional()
     @IsNumber()

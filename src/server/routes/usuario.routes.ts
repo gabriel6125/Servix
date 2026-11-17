@@ -13,6 +13,14 @@ usuarioRoutes
     .post(async (req, res) => usuarioController.login(req, res));
 
 usuarioRoutes
+    .route('/refresh')
+    .post(async (req, res) => usuarioController.renovarSessao(req, res));
+
+usuarioRoutes
+    .route('/logout')
+    .post(async (req, res) => usuarioController.logout(req, res));
+
+usuarioRoutes
     .route('/me')
     .all(authMiddleware)
     .get(async (req, res) => usuarioController.buscarMeuPerfil(req, res))

@@ -4,6 +4,7 @@ const KEY_LENGTH = 64;
 
 export async function hashPassword(password: string): Promise<string> {
     const salt = randomBytes(16);
+    // Aguarda a operacao assincrona e armazena o resultado para o passo seguinte.
     const key = await deriveKey(password, salt);
     return `scrypt$${salt.toString('hex')}$${key.toString('hex')}`;
 }
@@ -21,6 +22,7 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
     }
 
     const expected = Buffer.from(keyHex, 'hex');
+    // Verifica a condicao antes de prosseguir para o fluxo alternativo.
     if (expected.length !== KEY_LENGTH) {
         return false;
     }
@@ -30,6 +32,7 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
 function deriveKey(password: string, salt: Buffer): Promise<Buffer> {
     return new Promise((resolve, reject) => {
         scrypt(password, salt, KEY_LENGTH, (error, key) => {
+            // Verifica a condicao antes de prosseguir para o fluxo alternativo.
             if (error) {
                 reject(error);
                 return;

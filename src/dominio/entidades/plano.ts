@@ -1,3 +1,4 @@
+// Define o formato dos dados usados nesta parte da aplicacao.
 export type propsPlano = {
     id: string | null;
     nome: string;
@@ -6,7 +7,9 @@ export type propsPlano = {
     funcionalidades: string[] | null;
 };
 
+// Define o comportamento e os dados desta classe.
 export class Plano {
+    // Metodo constructor: executa esta etapa do fluxo e usa o estado ou os parametros recebidos.
     private constructor(private props: propsPlano) {}
 
     public static construir(
@@ -15,12 +18,14 @@ export class Plano {
         periodicidade: string,
         funcionalidades: string[] | null,
     ): Plano {
+        // Verifica a condicao antes de prosseguir para o fluxo alternativo.
         if (!nome || !periodicidade || !Number.isFinite(valor)) {
             throw new Error('Nome, valor e periodicidade são obrigatórios.');
         }
         return new Plano({ id: null, nome, valor, periodicidade, funcionalidades });
     }
 
+    // Metodo reconstruir: executa esta etapa do fluxo e usa o estado ou os parametros recebidos.
     public static reconstruir(props: propsPlano): Plano {
         return new Plano(props);
     }
@@ -31,6 +36,7 @@ export class Plano {
     public get periodicidade() { return this.props.periodicidade; }
     public get funcionalidades() { return this.props.funcionalidades; }
 
+    // Metodo toJSON: executa esta etapa do fluxo e usa o estado ou os parametros recebidos.
     public toJSON() {
         return {
             id: this.id,

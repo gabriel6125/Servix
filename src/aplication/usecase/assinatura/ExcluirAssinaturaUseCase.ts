@@ -3,9 +3,12 @@ import type { UseCase } from '../UseCase';
 
 type ExcluirAssinaturaInput = { id: string; usuarioId: string };
 
+// Define o comportamento e os dados desta classe.
 export class ExcluirAssinaturaUseCase implements UseCase<ExcluirAssinaturaInput, void> {
+    // Mantem a dependencia service disponivel para as operacoes da classe.
     private readonly service = new AssinaturaService();
 
+    // Metodo execute: executa esta etapa do fluxo e usa o estado ou os parametros recebidos.
     public execute(input: ExcluirAssinaturaInput): Promise<void> {
         return this.service.excluir(input.id, input.usuarioId);
     }

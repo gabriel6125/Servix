@@ -6,14 +6,18 @@ import { validarAtualizacao } from '../validar-atualizacao';
 
 type AtualizarServicoInput = { id: string; usuarioId: string; dados: ServicoUpdateDto };
 
+// Define o comportamento e os dados desta classe.
 export class AtualizarServicoUseCase implements UseCase<
     AtualizarServicoInput,
     Awaited<ReturnType<ServicoService['atualizar']>>
 > {
+    // Mantem a dependencia service disponivel para as operacoes da classe.
     private readonly service = new ServicoService();
 
+    // Metodo execute: executa esta etapa do fluxo e usa o estado ou os parametros recebidos.
     public async execute({ id, usuarioId, dados }: AtualizarServicoInput): Promise<Awaited<ReturnType<ServicoService['atualizar']>>> {
         validarAtualizacao(dados);
+        // Aguarda a operacao assincrona e armazena o resultado para o passo seguinte.
         const atual = await this.service.buscarPorId(id, usuarioId);
         const servico = Servico.reconstruir({
             id,

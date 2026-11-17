@@ -5,9 +5,12 @@ import type { UseCase } from '../UseCase';
 
 type CriarOrcamentoInput = { usuarioId: string; dados: OrcamentoCreateDto };
 
+// Define o comportamento e os dados desta classe.
 export class CriarOrcamentoUseCase implements UseCase<CriarOrcamentoInput, Awaited<ReturnType<OrcamentoService['salvar']>>> {
+    // Mantem a dependencia service disponivel para as operacoes da classe.
     private readonly service = new OrcamentoService();
 
+    // Metodo execute: executa esta etapa do fluxo e usa o estado ou os parametros recebidos.
     public execute({ usuarioId, dados }: CriarOrcamentoInput): Promise<Awaited<ReturnType<OrcamentoService['salvar']>>> {
         const orcamento = Orcamento.construir(
             dados.servico_id.toString(),

@@ -1,8 +1,11 @@
 import { connection } from '../../../util/connection';
 import { Assinatura, type propsAssinatura } from '../../../dominio/entidades/assinatura';
 
+// Define o comportamento e os dados desta classe.
 export class AssinaturaDao {
+    // Metodo salvar: executa esta etapa do fluxo e usa o estado ou os parametros recebidos.
     public async salvar(assinatura: Assinatura): Promise<Assinatura> {
+        // Aguarda a operacao assincrona e armazena o resultado para o passo seguinte.
         const result = await connection.query(
             `insert into assinatura (usuario_id, plano_id, status, data_inicio, data_fim)
              values ($1, $2, $3, $4, $5)
@@ -18,7 +21,9 @@ export class AssinaturaDao {
         return this.mapearAssinatura(result.rows[0]);
     }
 
+    // Metodo buscarPorId: executa esta etapa do fluxo e usa o estado ou os parametros recebidos.
     public async buscarPorId(id: string, usuarioId: string): Promise<Assinatura | null> {
+        // Aguarda a operacao assincrona e armazena o resultado para o passo seguinte.
         const result = await connection.query(
             `select id, usuario_id, plano_id, status, data_inicio, data_fim
              from assinatura where id = $1 and usuario_id = $2`,
@@ -27,7 +32,9 @@ export class AssinaturaDao {
         return result.rows[0] ? this.mapearAssinatura(result.rows[0]) : null;
     }
 
+    // Metodo listar: executa esta etapa do fluxo e usa o estado ou os parametros recebidos.
     public async listar(usuarioId: string): Promise<Assinatura[]> {
+        // Aguarda a operacao assincrona e armazena o resultado para o passo seguinte.
         const result = await connection.query(
             `select id, usuario_id, plano_id, status, data_inicio, data_fim
              from assinatura where usuario_id = $1 order by id`,
@@ -36,7 +43,9 @@ export class AssinaturaDao {
         return result.rows.map((row) => this.mapearAssinatura(row));
     }
 
+    // Metodo atualizar: executa esta etapa do fluxo e usa o estado ou os parametros recebidos.
     public async atualizar(assinatura: Assinatura): Promise<Assinatura | null> {
+        // Aguarda a operacao assincrona e armazena o resultado para o passo seguinte.
         const result = await connection.query(
             `update assinatura
              set plano_id = $1, status = $2, data_inicio = $3, data_fim = $4
@@ -54,7 +63,9 @@ export class AssinaturaDao {
         return result.rows[0] ? this.mapearAssinatura(result.rows[0]) : null;
     }
 
+    // Metodo excluir: executa esta etapa do fluxo e usa o estado ou os parametros recebidos.
     public async excluir(id: string, usuarioId: string): Promise<boolean> {
+        // Aguarda a operacao assincrona e armazena o resultado para o passo seguinte.
         const result = await connection.query(
             'delete from assinatura where id = $1 and usuario_id = $2',
             [id, usuarioId],
@@ -62,11 +73,14 @@ export class AssinaturaDao {
         return (result.rowCount ?? 0) > 0;
     }
 
+    // Metodo planoExiste: executa esta etapa do fluxo e usa o estado ou os parametros recebidos.
     public async planoExiste(planoId: string): Promise<boolean> {
+        // Aguarda a operacao assincrona e armazena o resultado para o passo seguinte.
         const result = await connection.query('select 1 from plano where id = $1', [planoId]);
         return (result.rowCount ?? 0) > 0;
     }
 
+    // Metodo mapearAssinatura: executa esta etapa do fluxo e usa o estado ou os parametros recebidos.
     private mapearAssinatura(row: Record<string, unknown>): Assinatura {
         const props: propsAssinatura = {
             id: String(row.id),

@@ -1,8 +1,11 @@
 import { connection } from '../../../util/connection';
 import { Orcamento, type propsOrcamento } from '../../../dominio/entidades/orcamento';
 
+// Define o comportamento e os dados desta classe.
 export class OrcamentoDao {
+    // Metodo salvar: executa esta etapa do fluxo e usa o estado ou os parametros recebidos.
     public async salvar(orcamento: Orcamento, usuarioId: string): Promise<Orcamento | null> {
+        // Aguarda a operacao assincrona e armazena o resultado para o passo seguinte.
         const result = await connection.query(
             `insert into orcamento
                 (servico_id, valor_pecas, valor_mao_de_obra, outros_custos,
@@ -27,7 +30,9 @@ export class OrcamentoDao {
         return result.rows[0] ? this.mapearOrcamento(result.rows[0]) : null;
     }
 
+    // Metodo buscarPorId: executa esta etapa do fluxo e usa o estado ou os parametros recebidos.
     public async buscarPorId(id: string, usuarioId: string): Promise<Orcamento | null> {
+        // Aguarda a operacao assincrona e armazena o resultado para o passo seguinte.
         const result = await connection.query(
             `select o.id, o.servico_id, o.valor_pecas, o.valor_mao_de_obra,
                     o.outros_custos, o.valor_total, o.status, o.link_acesso
@@ -39,7 +44,9 @@ export class OrcamentoDao {
         return result.rows[0] ? this.mapearOrcamento(result.rows[0]) : null;
     }
 
+    // Metodo listar: executa esta etapa do fluxo e usa o estado ou os parametros recebidos.
     public async listar(usuarioId: string): Promise<Orcamento[]> {
+        // Aguarda a operacao assincrona e armazena o resultado para o passo seguinte.
         const result = await connection.query(
             `select o.id, o.servico_id, o.valor_pecas, o.valor_mao_de_obra,
                     o.outros_custos, o.valor_total, o.status, o.link_acesso
@@ -51,7 +58,9 @@ export class OrcamentoDao {
         return result.rows.map((row) => this.mapearOrcamento(row));
     }
 
+    // Metodo atualizar: executa esta etapa do fluxo e usa o estado ou os parametros recebidos.
     public async atualizar(orcamento: Orcamento, usuarioId: string): Promise<Orcamento | null> {
+        // Aguarda a operacao assincrona e armazena o resultado para o passo seguinte.
         const result = await connection.query(
             `update orcamento
              set servico_id = $1, valor_pecas = $2, valor_mao_de_obra = $3,
@@ -77,7 +86,9 @@ export class OrcamentoDao {
         return result.rows[0] ? this.mapearOrcamento(result.rows[0]) : null;
     }
 
+    // Metodo excluir: executa esta etapa do fluxo e usa o estado ou os parametros recebidos.
     public async excluir(id: string, usuarioId: string): Promise<boolean> {
+        // Aguarda a operacao assincrona e armazena o resultado para o passo seguinte.
         const result = await connection.query(
             `delete from orcamento o
              using servico s
@@ -87,6 +98,7 @@ export class OrcamentoDao {
         return (result.rowCount ?? 0) > 0;
     }
 
+    // Metodo mapearOrcamento: executa esta etapa do fluxo e usa o estado ou os parametros recebidos.
     private mapearOrcamento(row: Record<string, unknown>): Orcamento {
         const props: propsOrcamento = {
             id: String(row.id),

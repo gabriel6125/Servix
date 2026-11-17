@@ -1,3 +1,4 @@
+// Define o formato dos dados usados nesta parte da aplicacao.
 export type propsAssinatura = {
     id: string | null;
     usuarioId: string;
@@ -7,7 +8,9 @@ export type propsAssinatura = {
     dataFim: string | null;
 };
 
+// Define o comportamento e os dados desta classe.
 export class Assinatura {
+    // Metodo constructor: executa esta etapa do fluxo e usa o estado ou os parametros recebidos.
     private constructor(private props: propsAssinatura) {}
 
     public static construir(
@@ -17,12 +20,14 @@ export class Assinatura {
         dataInicio: string,
         dataFim: string | null,
     ): Assinatura {
+        // Verifica a condicao antes de prosseguir para o fluxo alternativo.
         if (!usuarioId || !planoId || !status || !dataInicio) {
             throw new Error('Todos os campos obrigatórios da assinatura devem ser informados.');
         }
         return new Assinatura({ id: null, usuarioId, planoId, status, dataInicio, dataFim });
     }
 
+    // Metodo reconstruir: executa esta etapa do fluxo e usa o estado ou os parametros recebidos.
     public static reconstruir(props: propsAssinatura): Assinatura {
         return new Assinatura(props);
     }
@@ -34,6 +39,7 @@ export class Assinatura {
     public get dataInicio() { return this.props.dataInicio; }
     public get dataFim() { return this.props.dataFim; }
 
+    // Metodo toJSON: executa esta etapa do fluxo e usa o estado ou os parametros recebidos.
     public toJSON() {
         return {
             id: this.id,

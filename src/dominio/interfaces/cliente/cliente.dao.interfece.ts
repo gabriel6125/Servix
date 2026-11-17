@@ -1,5 +1,6 @@
 import { Usuario } from "../../entidades/usuario";
 
+// Define o formato dos dados usados nesta parte da aplicacao.
 export type UsuarioUpdateData = {
     id: string;
     nome: string;
@@ -7,6 +8,7 @@ export type UsuarioUpdateData = {
     senha: string;
 };
 
+// Define o contrato esperado pelas implementacoes.
 export interface IClienteDAO {
     registrar(usuario: Usuario): Promise<void>;
     searchByemail(email: string): Promise<Usuario | null>;

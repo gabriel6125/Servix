@@ -1,3 +1,4 @@
+// Define o comportamento e os dados desta classe.
 export class OrcamentoSearchDto {
     servico_id!: string;
     valor_pecas!: number | null;

@@ -1,3 +1,4 @@
+// Define o formato dos dados usados nesta parte da aplicacao.
 export type propsServico = {
     id: string | null;
     clienteId: string;
@@ -8,7 +9,9 @@ export type propsServico = {
     dataConclusao: string | null;
 };
 
+// Define o comportamento e os dados desta classe.
 export class Servico {
+    // Metodo constructor: executa esta etapa do fluxo e usa o estado ou os parametros recebidos.
     private constructor(private props: propsServico) {}
 
     public static construir(
@@ -19,6 +22,7 @@ export class Servico {
         dataPrevista: string | null,
         dataConclusao: string | null,
     ): Servico {
+        // Verifica a condicao antes de prosseguir para o fluxo alternativo.
         if (!clienteId || !usuarioId || !descricao || !status) {
             throw new Error('Cliente, usuário, descrição e status são obrigatórios.');
         }
@@ -33,6 +37,7 @@ export class Servico {
         });
     }
 
+    // Metodo reconstruir: executa esta etapa do fluxo e usa o estado ou os parametros recebidos.
     public static reconstruir(props: propsServico): Servico {
         return new Servico(props);
     }
@@ -45,6 +50,7 @@ export class Servico {
     public get dataPrevista() { return this.props.dataPrevista; }
     public get dataConclusao() { return this.props.dataConclusao; }
 
+    // Metodo toJSON: executa esta etapa do fluxo e usa o estado ou os parametros recebidos.
     public toJSON() {
         return {
             id: this.id,
