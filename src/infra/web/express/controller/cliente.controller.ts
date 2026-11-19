@@ -5,15 +5,19 @@ import { ClienteCreateDto } from '../../../../aplication/dto/cliente/clienteCrea
 import { ClienteSearchByIdDto } from '../../../../aplication/dto/cliente/clienteSearchByIdDto';
 import { ClienteSearchDto } from '../../../../aplication/dto/cliente/clienteSearchDto';
 import { ClienteUpdateDto } from '../../../../aplication/dto/cliente/clienteUpdateDto';
+import { ClienteSearchNameDto } from '../../../../aplication/dto/cliente/clienteSearchNameDto';
+import { ClienteSearchByServiceDto } from '../../../../aplication/dto/cliente/clienteSearchByServiceDto';
 import { AtualizarClienteUseCase } from '../../../../aplication/usecase/cliente/AtualizarClienteUseCase';
 import { BuscarClientePorIdUseCase } from '../../../../aplication/usecase/cliente/BuscarClientePorIdUseCase';
 import { CriarClienteUseCase } from '../../../../aplication/usecase/cliente/CriarClienteUseCase';
 import { ExcluirClienteUseCase } from '../../../../aplication/usecase/cliente/ExcluirClienteUseCase';
 import { ListarClientesUseCase } from '../../../../aplication/usecase/cliente/ListarClientesUseCase';
+import { ClienteService } from '../../../../service/cliente.servico';
 import { idDaRota, tratarErroDoController, usuarioAutenticado } from './controller.util';
 
 // Define o comportamento e os dados desta classe.
 export class ClienteController {
+    private readonly clienteService = new ClienteService();
     // Mantem a dependencia criarUseCase disponivel para as operacoes da classe.
     private readonly criarUseCase = new CriarClienteUseCase();
     // Mantem a dependencia listarUseCase disponivel para as operacoes da classe.
@@ -72,6 +76,25 @@ export class ClienteController {
     public async listar(req: Request, res: Response) {
         // Tenta executar a operacao; falhas sao capturadas no bloco catch abaixo.
         try {
+            const nome = typeof req.query.nome === 'string'
+                ? req.query.nome
+                : typeof req.query.q === 'string' ? req.query.q : '';
+            const servicoId = typeof req.query.servico_id === 'string'
+                ? req.query.servico_id
+                : typeof req.query.servicoId === 'string' ? req.query.servicoId : '';
+            if (nome) {
+                const dto = plainToInstance(ClienteSearchNameDto, { nome });
+                const errors = await validate(dto);
+                if (errors.length > 0) {
+                    return res.status(400).json({ errors: errors.map((error) => error.toString()) });
+                }
+                const clientes = await this.clienteService.buscarPorNome(dto.nome, usuarioAutenticado(req));
+                return res.json(clientes.map((cliente) => cliente.toJSON()));
+            }
+            if (servicoId) {
+                const clientes = await this.clienteService.listarPorServico(servicoId, usuarioAutenticado(req));
+                return res.json(clientes.map((cliente) => cliente.toJSON()));
+            }
             // Aguarda a operacao assincrona e armazena o resultado para o passo seguinte.
             const clientes = await this.listarUseCase.execute(usuarioAutenticado(req));
             // Serializa o resultado da operacao como JSON e envia ao cliente.
@@ -79,6 +102,42 @@ export class ClienteController {
                 ClienteSearchDto,
                 clientes.map((cliente) => cliente.toJSON()),
             ));
+        } catch (error) {
+            return tratarErroDoController(error, res);
+        }
+    }
+
+    public async buscar(req: Request, res: Response) {
+        try {
+            const nome = typeof req.query.nome === 'string'
+                ? req.query.nome
+                : typeof req.query.q === 'string' ? req.query.q : '';
+            const dto = plainToInstance(ClienteSearchNameDto, { nome });
+            const errors = await validate(dto, { whitelist: true, forbidNonWhitelisted: true });
+            if (errors.length > 0) {
+                return res.status(400).json({ errors: errors.map((error) => error.toString()) });
+            }
+            const clientes = await this.clienteService.buscarPorNome(dto.nome, usuarioAutenticado(req));
+            return res.json(clientes.map((cliente) => cliente.toJSON()));
+        } catch (error) {
+            return tratarErroDoController(error, res);
+        }
+    }
+
+    public async filtrarPorServico(req: Request, res: Response) {
+        try {
+            const dto = plainToInstance(ClienteSearchByServiceDto, {
+                servicoId: String(req.params.servicoId),
+            });
+            const errors = await validate(dto);
+            if (errors.length > 0) {
+                return res.status(400).json({ errors: errors.map((error) => error.toString()) });
+            }
+            const clientes = await this.clienteService.listarPorServico(
+                dto.servicoId,
+                usuarioAutenticado(req),
+            );
+            return res.json(clientes.map((cliente) => cliente.toJSON()));
         } catch (error) {
             return tratarErroDoController(error, res);
         }

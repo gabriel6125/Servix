@@ -21,6 +21,14 @@ export class ServicoService {
         return this.dao.listar(usuarioId);
     }
 
+    public listarPorCliente(clienteId: string, usuarioId: string): Promise<Servico[]> {
+        return this.dao.listarPorCliente(clienteId, usuarioId);
+    }
+
+    public listarAlertasPrazo(usuarioId: string): Promise<Servico[]> {
+        return this.dao.listarAlertasPrazo(usuarioId);
+    }
+
     // Metodo buscarPorId: executa esta etapa do fluxo e usa o estado ou os parametros recebidos.
     public async buscarPorId(id: string, usuarioId: string): Promise<Servico> {
         // Aguarda a operacao assincrona e armazena o resultado para o passo seguinte.

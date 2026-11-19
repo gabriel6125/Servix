@@ -3,6 +3,16 @@ import { orcamentoController } from '../../infra/web/express/controller/orcament
 
 const orcamentoRoutes = Router();
 
+// Gera um link público reutilizável e disponibiliza o orçamento.
+orcamentoRoutes
+    .route('/:id/enviar')
+    .post(async (req, res) => orcamentoController.enviar(req, res));
+
+// Registra explicitamente a decisão do cliente.
+orcamentoRoutes
+    .route('/:id/decisao')
+    .post(async (req, res) => orcamentoController.registrarDecisao(req, res));
+
 orcamentoRoutes
     .route('/')
     .get(async (req, res) => orcamentoController.listar(req, res))

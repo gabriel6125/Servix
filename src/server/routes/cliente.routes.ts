@@ -3,6 +3,16 @@ import { clienteController } from '../../infra/web/express/controller/cliente.co
 
 const clienteRoutes = Router();
 
+// Busca por nome; aceita os parâmetros "nome" ou "q".
+clienteRoutes
+    .route('/buscar')
+    .get(async (req, res) => clienteController.buscar(req, res));
+
+// Lista clientes que possuem pelo menos um serviço com o ID informado.
+clienteRoutes
+    .route('/por-servico/:servicoId')
+    .get(async (req, res) => clienteController.filtrarPorServico(req, res));
+
 clienteRoutes
     .route('/')
     .get(async (req, res) => clienteController.listar(req, res))

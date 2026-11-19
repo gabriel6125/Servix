@@ -37,6 +37,29 @@ export class ClienteDao {
         return result.rows.map((row) => this.mapearCliente(row));
     }
 
+    public async buscarPorNome(nome: string, usuarioId: string): Promise<Cliente[]> {
+        const result = await connection.query(
+            `select id, usuario_id, nome, telefone, email
+             from cliente
+             where usuario_id = $1 and nome ilike $2
+             order by nome`,
+            [usuarioId, `%${nome}%`],
+        );
+        return result.rows.map((row) => this.mapearCliente(row));
+    }
+
+    public async listarPorServico(servicoId: string, usuarioId: string): Promise<Cliente[]> {
+        const result = await connection.query(
+            `select c.id, c.usuario_id, c.nome, c.telefone, c.email
+             from cliente c
+             inner join servico s on s.cliente_id = c.id
+             where c.usuario_id = $1 and s.id = $2
+             order by c.nome`,
+            [usuarioId, servicoId],
+        );
+        return result.rows.map((row) => this.mapearCliente(row));
+    }
+
     // Metodo atualizar: executa esta etapa do fluxo e usa o estado ou os parametros recebidos.
     public async atualizar(cliente: Cliente): Promise<Cliente | null> {
         // Aguarda a operacao assincrona e armazena o resultado para o passo seguinte.

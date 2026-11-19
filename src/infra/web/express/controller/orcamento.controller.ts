@@ -5,6 +5,7 @@ import { OrcamentoCreateDto } from '../../../../aplication/dto/orcamento/orcamen
 import { OrcamentoSearchByIdDto } from '../../../../aplication/dto/orcamento/orcamentoSearchByIdDto';
 import { OrcamentoSearchDto } from '../../../../aplication/dto/orcamento/orcamentoSearchDto';
 import { OrcamentoUpdateDto } from '../../../../aplication/dto/orcamento/orcamentoUpdateDto';
+import { OrcamentoDecisionDto } from '../../../../aplication/dto/orcamento/orcamentoDecisionDto';
 import { AtualizarOrcamentoUseCase } from '../../../../aplication/usecase/orcamento/AtualizarOrcamentoUseCase';
 import { BuscarOrcamentoPorIdUseCase } from '../../../../aplication/usecase/orcamento/BuscarOrcamentoPorIdUseCase';
 import { CriarOrcamentoUseCase } from '../../../../aplication/usecase/orcamento/CriarOrcamentoUseCase';
@@ -93,6 +94,51 @@ export class OrcamentoController {
             await this.excluirUseCase.execute({ id, usuarioId: usuarioAutenticado(req) });
             // Envia a resposta com o status HTTP 204 e encerra a execucao deste handler.
             return res.status(204).send();
+        } catch (error) {
+            return tratarErroDoController(error, res);
+        }
+    }
+
+    public async enviar(req: Request, res: Response) {
+        try {
+            const id = await idDaRota(req, OrcamentoSearchByIdDto);
+            const usuarioId = usuarioAutenticado(req);
+            const baseUrl = `${req.protocol}://${req.get('host')}`;
+            const link = `${baseUrl}/orcamentos/publico/${id}`;
+            const atualizado = await this.atualizarUseCase.execute({
+                id,
+                usuarioId,
+                dados: plainToInstance(OrcamentoUpdateDto, {
+                    status: 'Enviado',
+                    link_acesso: link,
+                }),
+            });
+            return res.json(atualizado);
+        } catch (error) {
+            return tratarErroDoController(error, res);
+        }
+    }
+
+    public async registrarDecisao(req: Request, res: Response) {
+        try {
+            const decisao = typeof req.body?.decisao === 'string'
+                ? req.body.decisao
+                : typeof req.body?.status === 'string' ? req.body.status : '';
+            const dto = plainToInstance(OrcamentoDecisionDto, {
+                decisao: decisao.trim().toLowerCase(),
+            });
+            const errors = await validate(dto, { whitelist: true, forbidNonWhitelisted: true });
+            if (errors.length > 0) {
+                return res.status(400).json({ errors: errors.map((error) => error.toString()) });
+            }
+            const status = dto.decisao.startsWith('aprov') ? 'Aprovado' : 'Recusado';
+            const id = await idDaRota(req, OrcamentoSearchByIdDto);
+            const atualizado = await this.atualizarUseCase.execute({
+                id,
+                usuarioId: usuarioAutenticado(req),
+                dados: plainToInstance(OrcamentoUpdateDto, { status }),
+            });
+            return res.json(atualizado);
         } catch (error) {
             return tratarErroDoController(error, res);
         }

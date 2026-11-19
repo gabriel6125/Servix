@@ -45,6 +45,32 @@ export class ServicoDao {
         return result.rows.map((row) => this.mapearServico(row));
     }
 
+    public async listarPorCliente(clienteId: string, usuarioId: string): Promise<Servico[]> {
+        const result = await connection.query(
+            `select id, cliente_id, usuario_id, descricao, status, data_prevista, data_conclusao
+             from servico
+             where usuario_id = $1 and cliente_id = $2
+             order by id`,
+            [usuarioId, clienteId],
+        );
+        return result.rows.map((row) => this.mapearServico(row));
+    }
+
+    public async listarAlertasPrazo(usuarioId: string): Promise<Servico[]> {
+        const result = await connection.query(
+            `select id, cliente_id, usuario_id, descricao, status, data_prevista, data_conclusao
+             from servico
+             where usuario_id = $1
+               and data_prevista is not null
+               and data_conclusao is null
+               and data_prevista <= (CURRENT_DATE + interval '3 days')::date
+               and lower(status) not in ('concluido', 'cancelado')
+             order by data_prevista`,
+            [usuarioId],
+        );
+        return result.rows.map((row) => this.mapearServico(row));
+    }
+
     // Metodo atualizar: executa esta etapa do fluxo e usa o estado ou os parametros recebidos.
     public async atualizar(servico: Servico): Promise<Servico | null> {
         // Aguarda a operacao assincrona e armazena o resultado para o passo seguinte.

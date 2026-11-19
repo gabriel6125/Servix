@@ -1,9 +1,11 @@
 import { UsuarioDao } from '../infra/bd/pg/usuario.dao';
 import { Usuario } from '../dominio/entidades/usuario';
 import { RefreshTokenDao } from '../infra/bd/pg/refresh-token.dao';
+import { connection } from '../util/connection';
 import { HttpError } from '../util/http-error';
 import { createToken } from '../util/jwt';
 import { hashPassword, verifyPassword } from '../util/password';
+import { createHash, randomBytes } from 'node:crypto';
 import {
     createRefreshToken,
     hashRefreshToken,
@@ -97,6 +99,54 @@ export class UsuarioService {
             throw new HttpError(404, 'Usuário não encontrado.');
         }
         return resultado;
+    }
+
+    public async solicitarRecuperacaoSenha(email: string): Promise<{ resetToken: string } | { message: string }> {
+        const usuario = await this.dao.buscarPorEmail(email.trim().toLowerCase());
+        if (!usuario?.id) {
+            // O retorno deliberadamente não confirma se o e-mail está cadastrado.
+            return { message: 'Se o e-mail estiver cadastrado, enviaremos instruções de recuperação.' };
+        }
+
+        const token = randomBytes(32).toString('hex');
+        const tokenHash = createHash('sha256').update(token).digest('hex');
+        await connection.query(
+            `insert into password_reset_token (usuario_id, token_hash, expires_at)
+             values ($1, $2, NOW() + interval '30 minutes')`,
+            [usuario.id, tokenHash],
+        );
+        return { resetToken: token };
+    }
+
+    public async redefinirSenha(token: string, novaSenha: string): Promise<void> {
+        if (novaSenha.length < 8) {
+            throw new HttpError(400, 'A nova senha deve ter pelo menos 8 caracteres.');
+        }
+        const tokenHash = createHash('sha256').update(token).digest('hex');
+        const result = await connection.query<{ usuario_id: string }>(
+            `select usuario_id
+             from password_reset_token
+             where token_hash = $1 and used_at is null and expires_at > NOW()`,
+            [tokenHash],
+        );
+        const usuarioId = result.rows[0]?.usuario_id;
+        if (!usuarioId) {
+            throw new HttpError(400, 'Token de recuperação inválido ou expirado.');
+        }
+
+        const usuario = await this.buscarPorId(String(usuarioId));
+        const atualizado = Usuario.reconstruir({
+            id: usuario.id,
+            nome: usuario.nome,
+            email: usuario.email,
+            senha: await hashPassword(novaSenha),
+        });
+        await this.dao.atualizar(atualizado);
+        await connection.query(
+            `update password_reset_token set used_at = NOW()
+             where token_hash = $1`,
+            [tokenHash],
+        );
     }
 
     // Metodo criarSessao: executa esta etapa do fluxo e usa o estado ou os parametros recebidos.

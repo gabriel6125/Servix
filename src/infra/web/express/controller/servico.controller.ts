@@ -5,15 +5,19 @@ import { ServicoCreateDto } from '../../../../aplication/dto/servico/servicoCrea
 import { ServicoSearchByIdDto } from '../../../../aplication/dto/servico/servicoSearchByIdDto';
 import { ServicoSearchDto } from '../../../../aplication/dto/servico/servicoSearchDto';
 import { ServicoUpdateDto } from '../../../../aplication/dto/servico/servicoUpdateDto';
+import { ServicoStatusDto } from '../../../../aplication/dto/servico/servicoStatusDto';
+import { ServicoSearchByClientDto } from '../../../../aplication/dto/servico/servicoSearchByClientDto';
 import { AtualizarServicoUseCase } from '../../../../aplication/usecase/servico/AtualizarServicoUseCase';
 import { BuscarServicoPorIdUseCase } from '../../../../aplication/usecase/servico/BuscarServicoPorIdUseCase';
 import { CriarServicoUseCase } from '../../../../aplication/usecase/servico/CriarServicoUseCase';
 import { ExcluirServicoUseCase } from '../../../../aplication/usecase/servico/ExcluirServicoUseCase';
 import { ListarServicosUseCase } from '../../../../aplication/usecase/servico/ListarServicosUseCase';
+import { ServicoService } from '../../../../service/servico.servico';
 import { idDaRota, tratarErroDoController, usuarioAutenticado } from './controller.util';
 
 // Define o comportamento e os dados desta classe.
 export class ServicoController {
+    private readonly servicoService = new ServicoService();
     // Mantem a dependencia criarUseCase disponivel para as operacoes da classe.
     private readonly criarUseCase = new CriarServicoUseCase();
     // Mantem a dependencia listarUseCase disponivel para as operacoes da classe.
@@ -67,6 +71,18 @@ export class ServicoController {
     public async listar(req: Request, res: Response) {
         // Tenta executar a operacao; falhas sao capturadas no bloco catch abaixo.
         try {
+            const clienteId = typeof req.query.cliente_id === 'string'
+                ? req.query.cliente_id
+                : typeof req.query.clienteId === 'string' ? req.query.clienteId : '';
+            if (clienteId) {
+                const dto = plainToInstance(ServicoSearchByClientDto, { clienteId });
+                const errors = await validate(dto);
+                if (errors.length > 0) {
+                    return res.status(400).json({ errors: errors.map((error) => error.toString()) });
+                }
+                const servicos = await this.servicoService.listarPorCliente(dto.clienteId, usuarioAutenticado(req));
+                return res.json(servicos.map((servico) => servico.toJSON()));
+            }
             // Aguarda a operacao assincrona e armazena o resultado para o passo seguinte.
             const servicos = await this.listarUseCase.execute(usuarioAutenticado(req));
             // Serializa o resultado da operacao como JSON e envia ao cliente.
@@ -74,6 +90,102 @@ export class ServicoController {
                 ServicoSearchDto,
                 servicos.map((servico) => servico.toJSON()),
             ));
+        } catch (error) {
+            return tratarErroDoController(error, res);
+        }
+    }
+
+    public async filtrarPorCliente(req: Request, res: Response) {
+        try {
+            const dto = plainToInstance(ServicoSearchByClientDto, {
+                clienteId: String(req.params.clienteId),
+            });
+            const errors = await validate(dto);
+            if (errors.length > 0) {
+                return res.status(400).json({ errors: errors.map((error) => error.toString()) });
+            }
+            const servicos = await this.servicoService.listarPorCliente(
+                dto.clienteId,
+                usuarioAutenticado(req),
+            );
+            return res.json(servicos.map((servico) => servico.toJSON()));
+        } catch (error) {
+            return tratarErroDoController(error, res);
+        }
+    }
+
+    public async alertasPrazo(req: Request, res: Response) {
+        try {
+            const servicos = await this.servicoService.listarAlertasPrazo(usuarioAutenticado(req));
+            return res.json({
+                quantidade: servicos.length,
+                alertas: servicos.map((servico) => ({
+                    servico: servico.toJSON(),
+                    mensagem: servico.dataPrevista
+                        ? `Prazo previsto: ${servico.dataPrevista}`
+                        : 'Prazo não informado.',
+                })),
+            });
+        } catch (error) {
+            return tratarErroDoController(error, res);
+        }
+    }
+
+    public async alterarStatus(req: Request, res: Response) {
+        try {
+            const dto = plainToInstance(ServicoStatusDto, req.body ?? {});
+            const errors = await validate(dto, { whitelist: true, forbidNonWhitelisted: true });
+            if (errors.length > 0) {
+                return res.status(400).json({ errors: errors.map((error) => error.toString()) });
+            }
+            const status = dto.status.trim();
+            const id = await idDaRota(req, ServicoSearchByIdDto);
+            const atualizado = await this.atualizarUseCase.execute({
+                id,
+                usuarioId: usuarioAutenticado(req),
+                dados: plainToInstance(ServicoUpdateDto, { status }),
+            });
+            return res.json({
+                servico: atualizado,
+                notificacao: `O status do serviço ${id} foi alterado para ${status}.`,
+            });
+        } catch (error) {
+            return tratarErroDoController(error, res);
+        }
+    }
+
+    public async finalizar(req: Request, res: Response) {
+        try {
+            const id = await idDaRota(req, ServicoSearchByIdDto);
+            const atualizado = await this.atualizarUseCase.execute({
+                id,
+                usuarioId: usuarioAutenticado(req),
+                dados: plainToInstance(ServicoUpdateDto, {
+                    status: 'Concluido',
+                    data_conclusao: new Date().toISOString().slice(0, 10),
+                }),
+            });
+            return res.json({
+                servico: atualizado,
+                notificacao: `O serviço ${id} foi concluído.`,
+            });
+        } catch (error) {
+            return tratarErroDoController(error, res);
+        }
+    }
+
+    public async cancelar(req: Request, res: Response) {
+        try {
+            const id = await idDaRota(req, ServicoSearchByIdDto);
+            const atualizado = await this.atualizarUseCase.execute({
+                id,
+                usuarioId: usuarioAutenticado(req),
+                dados: plainToInstance(ServicoUpdateDto, { status: 'Cancelado' }),
+            });
+            return res.json({
+                servico: atualizado,
+                notificacao: `O serviço ${id} foi cancelado.`,
+            });
         } catch (error) {
             return tratarErroDoController(error, res);
         }

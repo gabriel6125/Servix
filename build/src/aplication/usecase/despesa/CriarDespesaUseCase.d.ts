@@ -1,0 +1,13 @@
+import { DespesaCreateDto } from '../../dto/despesa/despesaCreateDto';
+import { DespesaService } from '../../../service/despesa.servico';
+import type { UseCase } from '../UseCase';
+type CriarDespesaInput = {
+    usuarioId: string;
+    dados: DespesaCreateDto;
+};
+export declare class CriarDespesaUseCase implements UseCase<CriarDespesaInput, Awaited<ReturnType<DespesaService['salvar']>>> {
+    private readonly service;
+    execute({ usuarioId, dados }: CriarDespesaInput): Promise<Awaited<ReturnType<DespesaService['salvar']>>>;
+}
+export {};
+//# sourceMappingURL=CriarDespesaUseCase.d.ts.map

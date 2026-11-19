@@ -10,6 +10,10 @@ import pagamentoRoutes from './pagamento.routes';
 import planoRoutes from './plano.routes';
 import servicoRoutes from './servico.routes';
 import usuarioRoutes from './usuario.routes';
+import relatorioRoutes from './relatorio.routes';
+import { plainToInstance } from 'class-transformer';
+import { validate } from 'class-validator';
+import { OrcamentoSearchByIdDto } from '../../aplication/dto/orcamento/orcamentoSearchByIdDto';
 
 const router = Router();
 
@@ -26,6 +30,31 @@ router.get('/health', async (_request, response, next) => {
     }
 });
 
+// Link público de orçamento: não exige autenticação do usuário que criou o orçamento.
+router.get('/orcamentos/publico/:id', async (request, response, next) => {
+    try {
+        const dto = plainToInstance(OrcamentoSearchByIdDto, { id: request.params.id });
+        const errors = await validate(dto);
+        if (errors.length > 0) {
+            return response.status(400).json({ errors: errors.map((error) => error.toString()) });
+        }
+        const result = await connection.query(
+            `select id, servico_id, valor_pecas, valor_mao_de_obra,
+                    outros_custos, valor_total, status, link_acesso
+             from orcamento
+             where id = $1 and status in ('Enviado', 'Aprovado', 'Recusado')`,
+            [dto.id],
+        );
+        if (!result.rows[0]) {
+            response.status(404).json({ error: { message: 'Orçamento público não encontrado.' } });
+            return;
+        }
+        response.json(result.rows[0]);
+    } catch (error) {
+        next(error);
+    }
+});
+
 router.use('/usuarios', usuarioRoutes);
 router.use('/assinaturas', authMiddleware, assinaturaRoutes);
 router.use('/clientes', authMiddleware, clienteRoutes);
@@ -35,5 +64,9 @@ router.use('/orcamentos', authMiddleware, orcamentoRoutes);
 router.use('/pagamentos', authMiddleware, pagamentoRoutes);
 router.use('/planos', authMiddleware, planoRoutes);
 router.use('/servicos', authMiddleware, servicoRoutes);
+router.use('/relatorios', authMiddleware, relatorioRoutes);
+
+// Atalho direto usado pelo frontend para visualizar o dashboard.
+router.use('/dashboard', authMiddleware, relatorioRoutes);
 
 export default router;

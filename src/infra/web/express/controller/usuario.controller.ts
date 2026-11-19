@@ -5,6 +5,8 @@ import { UsuarioCreateDto } from '../../../../aplication/dto/usuario/usuarioCrea
 import { UsuarioLoginDto } from '../../../../aplication/dto/usuario/usuarioLoginDto';
 import { UsuarioRefreshTokenDto } from '../../../../aplication/dto/usuario/usuarioRefreshTokenDto';
 import { UsuarioUpdateDto } from '../../../../aplication/dto/usuario/usuarioUpdateDto';
+import { UsuarioPasswordRecoveryDto } from '../../../../aplication/dto/usuario/usuarioPasswordRecoveryDto';
+import { UsuarioPasswordResetDto } from '../../../../aplication/dto/usuario/usuarioPasswordResetDto';
 import { AtualizarPerfilUsuarioUseCase } from '../../../../aplication/usecase/usuario/AtualizarPerfilUsuarioUseCase';
 import { AutenticarUsuarioUseCase } from '../../../../aplication/usecase/usuario/AutenticarUsuarioUseCase';
 import { BuscarUsuarioPorIdUseCase } from '../../../../aplication/usecase/usuario/BuscarUsuarioPorIdUseCase';
@@ -12,10 +14,12 @@ import { ExcluirUsuarioUseCase } from '../../../../aplication/usecase/usuario/Ex
 import { RenovarSessaoUsuarioUseCase } from '../../../../aplication/usecase/usuario/RenovarSessaoUsuarioUseCase';
 import { RegistrarUsuarioUseCase } from '../../../../aplication/usecase/usuario/RegistrarUsuarioUseCase';
 import { RevogarSessaoUsuarioUseCase } from '../../../../aplication/usecase/usuario/RevogarSessaoUsuarioUseCase';
+import { UsuarioService } from '../../../../service/usuario.servico';
 import { tratarErroDoController, usuarioAutenticado } from './controller.util';
 
 // Define o comportamento e os dados desta classe.
 export class UsuarioController {
+    private readonly usuarioService = new UsuarioService();
     // Mantem a dependencia registrarUseCase disponivel para as operacoes da classe.
     private readonly registrarUseCase = new RegistrarUsuarioUseCase();
     // Mantem a dependencia autenticarUseCase disponivel para as operacoes da classe.
@@ -110,6 +114,36 @@ export class UsuarioController {
             await this.revogarSessaoUseCase.execute(dto);
             // Envia a resposta com o status HTTP 204 e encerra a execucao deste handler.
             return res.status(204).send();
+        } catch (error) {
+            return tratarErroDoController(error, res);
+        }
+    }
+
+    // Solicita recuperação sem revelar se o e-mail existe no cadastro.
+    public async solicitarRecuperacaoSenha(req: Request, res: Response) {
+        try {
+            const dto = plainToInstance(UsuarioPasswordRecoveryDto, req.body ?? {});
+            const errors = await validate(dto, { whitelist: true, forbidNonWhitelisted: true });
+            if (errors.length > 0) {
+                return res.status(400).json({ errors: errors.map((error) => error.toString()) });
+            }
+            const resultado = await this.usuarioService.solicitarRecuperacaoSenha(dto.email);
+            return res.status(202).json(resultado);
+        } catch (error) {
+            return tratarErroDoController(error, res);
+        }
+    }
+
+    // Valida o token temporário e troca a senha após a recuperação.
+    public async redefinirSenha(req: Request, res: Response) {
+        try {
+            const dto = plainToInstance(UsuarioPasswordResetDto, req.body ?? {});
+            const errors = await validate(dto, { whitelist: true, forbidNonWhitelisted: true });
+            if (errors.length > 0) {
+                return res.status(400).json({ errors: errors.map((error) => error.toString()) });
+            }
+            await this.usuarioService.redefinirSenha(dto.token, dto.senha);
+            return res.json({ message: 'Senha redefinida com sucesso.' });
         } catch (error) {
             return tratarErroDoController(error, res);
         }

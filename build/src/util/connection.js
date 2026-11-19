@@ -1,0 +1,27 @@
+import 'dotenv/config';
+import { Pool } from 'pg';
+const config = process.env.DATABASE_URL
+    ? { connectionString: process.env.DATABASE_URL }
+    : {};
+if (process.env.PGHOST)
+    config.host = process.env.PGHOST;
+if (process.env.PGPORT)
+    config.port = Number(process.env.PGPORT);
+if (process.env.PGUSER)
+    config.user = process.env.PGUSER;
+if (process.env.PGPASSWORD)
+    config.password = process.env.PGPASSWORD;
+if (process.env.PGDATABASE)
+    config.database = process.env.PGDATABASE;
+// Verifica a condicao antes de prosseguir para o fluxo alternativo.
+if (process.env.PGSSLMODE === 'require') {
+    config.ssl = {
+        rejectUnauthorized: process.env.PGSSL_REJECT_UNAUTHORIZED !== 'false',
+    };
+}
+// Define um valor compartilhado usado pelas chamadas desta camada.
+export const connection = new Pool(config);
+connection.on('error', (error) => {
+    console.error('Erro inesperado na conexão com o PostgreSQL:', error);
+});
+//# sourceMappingURL=connection.js.map
